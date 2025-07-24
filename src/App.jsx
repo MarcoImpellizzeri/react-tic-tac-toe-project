@@ -1,8 +1,9 @@
-import { Player } from './components/Player.jsx'
-import { GameBoard } from './components/GameBoard.jsx'
 import { useState } from 'react'
-import { Log } from './components/Log.jsx'
 import { WINNING_COMBINATIONS } from './data.js'
+import Player from './components/Player.jsx'
+import GameBoard from './components/GameBoard.jsx'
+import Log from './components/Log.jsx'
+import GameOver from './components/GameOver.jsx'
 
 const initialGameBoard = [
   [null, null, null],
@@ -23,19 +24,21 @@ function App() {
 
   const activePlayer = deriveActivePlayer(gameTurns)
 
+  let gameBoard = [...initialGameBoard.map(array => [...array])]
+
   for (const turn of gameTurns) {
     const { square, player } = turn
     const { row, col } = square
 
-    initialGameBoard[row][col] = player
+    gameBoard[row][col] = player
   }
 
   let winner
 
   for (const combination of WINNING_COMBINATIONS) {
-    const firstSquareSymbol = initialGameBoard[combination[0].row][combination[0].column]
-    const secondSquareSymbol = initialGameBoard[combination[1].row][combination[1].column]
-    const thirdSquareSymbol = initialGameBoard[combination[2].row][combination[2].column]
+    const firstSquareSymbol = gameBoard[combination[0].row][combination[0].column]
+    const secondSquareSymbol = gameBoard[combination[1].row][combination[1].column]
+    const thirdSquareSymbol = gameBoard[combination[2].row][combination[2].column]
 
     if (
       firstSquareSymbol &&
@@ -46,6 +49,8 @@ function App() {
     }
   }
 
+  const hadDraw = gameTurns.length === 9 && !winner
+
   function handleActivePlayerChange(rowIndex, colIndex) {
     setGameTurns((prevTurns) => {
       let currentPLayer = deriveActivePlayer(prevTurns)
@@ -55,6 +60,10 @@ function App() {
         ...prevTurns
       ]
     })
+  }
+
+  function handleRematch() {
+    setGameTurns([])
   }
 
   return (
@@ -75,10 +84,10 @@ function App() {
             isActive={activePlayer === 'O'}
           />
         </ol>
-        {winner && <h1>Winner: {winner}</h1>}
+        { (winner || hadDraw) && <GameOver winner={winner} onReset={handleRematch} />}
         <GameBoard
           onSelectSquare={handleActivePlayerChange}
-          board={initialGameBoard}
+          board={gameBoard}
         />
       </div>
       <Log turns={gameTurns} />
